@@ -33,7 +33,10 @@ config.set_main_option("sqlalchemy.url", DATABASE_URL)
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from models import Base  # ✅ Ensure your models are correctly imported
+from models import Base  # Ensure this matches your actual models file location
+target_metadata = Base.metadata
+
+
 
 target_metadata = Base.metadata
 
