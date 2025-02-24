@@ -7,9 +7,14 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy entrypoint script separately before the rest
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 # Copy the FastAPI application
 COPY . .
-RUN chmod +x /entrypoint.sh
+
+# Set the entrypoint
 ENTRYPOINT ["/entrypoint.sh"]
 
 # Expose port 8000
