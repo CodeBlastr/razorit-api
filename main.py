@@ -7,6 +7,10 @@ from models import TestModel
 
 app = FastAPI()
 
+@app.get("/")
+async def root():
+    return {"message": "API is working and auto-deploying!"}
+
 @app.get("/test-db")
 async def test_db(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(TestModel))
