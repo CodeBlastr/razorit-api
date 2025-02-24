@@ -9,7 +9,7 @@ app = FastAPI()
 
 @app.get("/")
 async def root():
-    return {"message": "API Seeder Added"}
+    return {"message": "API Seeder Added and Secrets Added"}
 
 @app.get("/test-db")
 async def test_db(db: AsyncSession = Depends(get_db)):
