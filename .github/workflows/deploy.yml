@@ -9,6 +9,7 @@ jobs:
   deploy:
     name: Deploy to AWS
     runs-on: ubuntu-latest
+    environment: production  # 🔹 This ensures secrets come from the "production" environment
 
     steps:
       - name: Checkout Repository
