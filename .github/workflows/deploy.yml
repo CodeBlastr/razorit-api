@@ -44,3 +44,35 @@ jobs:
           SERVICE_NAME: razorit-api-service
         run: |
           aws ecs update-service --cluster $CLUSTER_NAME --service $SERVICE_NAME --force-new-deployment
+
+      - name: Wait for ECS Service to Stabilize
+        env:
+          AWS_REGION: us-east-2
+          CLUSTER_NAME: razorit-cluster
+          SERVICE_NAME: razorit-api-service
+        run: |
+          aws ecs wait services-stable --cluster $CLUSTER_NAME --services $SERVICE_NAME
+
+      - name: Run Migrations and Seed Database
+        env:
+          AWS_REGION: us-east-2
+          CLUSTER_NAME: razorit-cluster
+          SERVICE_NAME: razorit-api-service
+          TASK_DEFINITION: razorit-api-task:5
+        run: |
+          TASK_ID=$(aws ecs run-task \
+            --cluster $CLUSTER_NAME \
+            --task-definition $TASK_DEFINITION \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[subnet-a5328be8],securityGroups=[sg-55da003d],assignPublicIp=\"ENABLED\"}" \
+            --overrides '{"containerOverrides":[{"name":"razorit-api","command":["sh", "-c", "alembic upgrade head && python seed.py"]}]}' \
+            --query "tasks[0].taskArn" --output text)
+
+          echo "Waiting for task $TASK_ID to complete..."
+          aws ecs wait tasks-stopped --cluster $CLUSTER_NAME --tasks $TASK_ID
+
+          STATUS=$(aws ecs describe-tasks --cluster $CLUSTER_NAME --tasks $TASK_ID --query "tasks[0].containers[0].exitCode" --output text)
+          if [ "$STATUS" -ne 0 ]; then
+            echo "Migrations failed. Check logs in CloudWatch."
+            exit 1
+          fi
