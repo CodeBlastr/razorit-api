@@ -24,7 +24,7 @@ until nc -z -v -w30 "$DB_HOST" "$DB_PORT"; do
   sleep 5
 done
 
-echo "✅ Database is ready! Running migrations and seeds..."
+echo "✅ Database is ready! Running migrations and seeder..."
 alembic upgrade head
 python seed.py
 
