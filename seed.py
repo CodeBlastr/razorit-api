@@ -9,9 +9,9 @@ async def seed():
         async with session.begin():
             # Insert test data correctly
             test_data = [
-                TestModel(name="Auto Seeded Data 1"),
-                TestModel(name="Auto Seeded Data 2"),
-                TestModel(name="Auto Seeded Data 3")
+                TestModel(name="Two File Edit 1"),
+                TestModel(name="Two File Edit 2"),
+                TestModel(name="Two File Edit 3")
             ]
             session.add_all(test_data)
 
