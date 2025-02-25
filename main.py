@@ -10,9 +10,14 @@ app = FastAPI()
 
 # ✅ Allow both localhost (for development) and production frontend
 origins = [
+]
+origins = [
+    "https://www.razorit.com", # Production frontend
+    "http://www.razorit.com", # Production frontend
+    "https://api.razorit.com", # ✅ Secure API access
+    "http://api.razorit.com", # ✅ Secure API access
     "http://localhost:8080",  # Local dev environment
     "https://localhost:8080",  # Local dev environment
-    "https://www.razorit.com",  # Production frontend
 ]
 
 # ✅ Add CORS Middleware
