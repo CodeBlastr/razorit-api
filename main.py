@@ -9,7 +9,7 @@ app = FastAPI()
 
 @app.get("/")
 async def root():
-    return {"message": "API Seeder Added and Secrets Added"}
+    return {"message": "Auto-deployment is working!"}
 
 @app.get("/test-db")
 async def test_db(db: AsyncSession = Depends(get_db)):
