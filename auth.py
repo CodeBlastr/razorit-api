@@ -1,43 +1,36 @@
-from datetime import datetime, timedelta
-from typing import Optional
-
+import os
+from dotenv import load_dotenv
+from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
-from passlib.context import CryptContext
+from datetime import datetime, timedelta
+from typing import Optional
 
-# Secret key for signing JWT (Generate a secure one in production)
-SECRET_KEY = "your-secure-secret-key"
+# Load environment variables
+load_dotenv()
+
+# Retrieve credentials from .env
+ADMIN_USERNAME = os.getenv("ADMIN_USERNAME")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
+SECRET_KEY = os.getenv("JWT_SECRET_KEY")  # Replace with a strong secret
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
-# Mock user database
-fake_users_db = {
-    "testuser": {
-        "username": "testuser",
-        "full_name": "Test User",
-        "email": "test@example.com",
-        "hashed_password": "$2b$12$/Aj2UIj3fD2Xd9Jz5FptyuKm41CpLptT0sUZT8ny8OBzc7JtIOA3u",  # New hash
-        "disabled": False,
-    }
-}
-
-# Password hashing utility
+# Hash password
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+hashed_admin_password = pwd_context.hash(ADMIN_PASSWORD)
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
-def get_password_hash(password):
-    return pwd_context.hash(password)
-
-def authenticate_user(fake_db, username: str, password: str):
-    user = fake_db.get(username)
-    if not user or not verify_password(password, user["hashed_password"]):
+def authenticate_user(username: str, password: str):
+    """ Authenticate only the single admin user from environment variables """
+    if username != ADMIN_USERNAME or not verify_password(password, hashed_admin_password):
         return False
-    return user
+    return {"username": ADMIN_USERNAME}
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
@@ -54,11 +47,8 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
-        if username is None:
+        if username is None or username != ADMIN_USERNAME:
             raise credentials_exception
     except JWTError:
         raise credentials_exception
-    user = fake_users_db.get(username)
-    if user is None:
-        raise credentials_exception
-    return user
+    return {"username": ADMIN_USERNAME}
