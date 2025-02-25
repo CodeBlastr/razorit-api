@@ -1,8 +1,7 @@
-# Building and Deploying a Scalable Hello World CI/CD Pipeline on AWS Using ECS, ECR, Fargate, Docker, Github Actions, FastAPI and PostgreSQL on RDS**
+# Building and Deploying a Scalable Hello World CI/CD Pipeline on AWS Using ECS, ECR, Fargate, Docker, Github Actions, FastAPI and PostgreSQL on RDS
 ---
 
-**The Journey from Complexity to Simplicity**
-----
+### The Journey from Complexity to Simplicity
 
 Our adventure began with an ambitious goal: to deploy a fully containerized, scalable application on AWS using ECS and Fargate. Originally, we started with a complex multisystem approach, but as roadblocks piled up---configuration issues, deployment failures, and infrastructure inconsistencies---we realized we were biting off more than we could chew. Instead of continuing down that frustrating path, we made a strategic pivot.
 
@@ -14,10 +13,10 @@ By taking this approach, we set up a **solid foundation** that could later be ex
 
 * * * * *
 
-**🏗️ The Steps We Took to Build and Deploy a Hello World Frontend and API**
+### 🏗️ The Steps We Took to Build and Deploy a Hello World Frontend and API
 ---
 
-### **Step 1: Setting Up the Frontend**
+#### Step 1: Setting Up the Frontend
 
 To start, we created a simple **HTML page** that displays "Hello, World!" We hosted this page in a **Docker container** and pushed it to **AWS Elastic Container Registry (ECR)** for deployment via **AWS ECS and Fargate.**
 
@@ -35,7 +34,7 @@ To start, we created a simple **HTML page** that displays "Hello, World!" We hos
 
 * * * * *
 
-### **Step 2: Connecting the Backend API**
+#### Step 2: Connecting the Backend API
 
 Once the frontend was up and running, the next goal was to **deploy an API backend** using **FastAPI** (a lightweight Python framework). The backend needed to:
 
@@ -61,7 +60,7 @@ Once the frontend was up and running, the next goal was to **deploy an API backe
 
 * * * * *
 
-### **Step 3: Automating Deployments**
+#### Step 3: Automating Deployments
 
 To ensure every update was **automatically deployed**, we configured **GitHub Actions** for CI/CD.
 
@@ -81,7 +80,7 @@ To ensure every update was **automatically deployed**, we configured **GitHub Ac
 
 * * * * *
 
-### **Step 4: Debugging and Fixing Database Seeding**
+#### Step 4: Debugging and Fixing Database Seeding
 
 The API was connected to the database, but returning empty results. This led to several debugging sessions:
 
@@ -93,28 +92,16 @@ The API was connected to the database, but returning empty results. This led to 
 
 * * * * *
 
-### **Step 5: Enabling HTTPS for Secure API Access**
-
-Initially, [**www.razorit.com**](http://www.razorit.com) worked over HTTPS without any manual configuration---thanks to Cloudflare's auto-handling of SSL. However, **api.razorit.com** was still running on HTTP. We:
-
--   Enabled **HTTPS on Cloudflare for the API subdomain.**
-
--   Verified SSL worked across both frontend and backend.
-
--   Ensured **CORS was properly configured** for secure cross-origin requests.
-
-* * * * *
-
-**🚀 Step-by-Step Guide to Reproduce This Deployment**
+#### 🚀 Step-by-Step Guide to Reproduce This Deployment
 ------------------------------------------------------
 
-### **Frontend Deployment**
+#### Frontend Deployment
 
 1.  **Create a Simple Frontend**
 
     -   Create an `index.html` file:
 
-        ```
+        ```html
         <!DOCTYPE html>
         <html lang="en">
         <head><title>Hello, World!</title></head>
@@ -126,7 +113,7 @@ Initially, [**www.razorit.com**](http://www.razorit.com) worked over HTTPS witho
 
     -   Create a `Dockerfile`:
 
-        ```
+        ```python
         FROM nginx:alpine
         COPY index.html /usr/share/nginx/html/index.html
         EXPOSE 80
@@ -151,19 +138,19 @@ Initially, [**www.razorit.com**](http://www.razorit.com) worked over HTTPS witho
 
 * * * * *
 
-### **Backend API Deployment**
+#### Backend API Deployment
 
 1.  **Create a FastAPI Backend**
 
     -   Install dependencies:
 
-        ```
+        ```python
         pip install fastapi uvicorn sqlalchemy asyncpg alembic
         ```
 
     -   Create `main.py`:
 
-        ```
+        ```python
         from fastapi import FastAPI
         app = FastAPI()
 
@@ -182,12 +169,12 @@ Initially, [**www.razorit.com**](http://www.razorit.com) worked over HTTPS witho
 
 * * * * *
 
-**🎯 Final Thoughts**
+#### 🎯 Final Thoughts
 ---------------------
 
 This project evolved from **frustration with a complex system** to a **well-structured, automated deployment pipeline** for a scalable API and frontend. By breaking it into **small, testable components**, we eliminated headaches and built a **solid AWS infrastructure** ready to scale.
 
-### **💡 Key Takeaways**
+#### 💡 Key Takeaways
 
 ✅ Start **simple**---build up from a working foundation.\
 ✅ Use **GitHub Actions** for **automated CI/CD**.\
