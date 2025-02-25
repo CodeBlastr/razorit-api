@@ -7,13 +7,13 @@ import asyncio
 async def seed():
     async with AsyncSession(engine) as session:
         async with session.begin():
-            # Insert test data
+            # Insert test data correctly
             test_data = [
-                TestModel(name="Sample Data 1"),
-                TestModel(name="Sample Data 2"),
-                TestModel(name="Sample Data 3"),
+                TestModel(name="Seeded Data 1"),
+                TestModel(name="Seeded Data 2"),
+                TestModel(name="Seeded Data 3")
             ]
-            session.add(test_data)
+            session.add_all(test_data)
 
         await session.commit()
         print("✅ Database seeded successfully!")
