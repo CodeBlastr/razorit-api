@@ -10,8 +10,8 @@ app = FastAPI()
 
 # ✅ Allow both localhost (for development) and production frontend
 origins = [
-    "http://localhost:3000",  # Local dev environment
-    "http://127.0.0.1:3000",  # Localhost alternative
+    "http://localhost:8080",  # Local dev environment
+    "https://localhost:8080",  # Local dev environment
     "https://www.razorit.com",  # Production frontend
 ]
 
