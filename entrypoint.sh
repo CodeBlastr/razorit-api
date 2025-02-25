@@ -24,9 +24,9 @@ until nc -z -v -w30 "$DB_HOST" "$DB_PORT"; do
   sleep 5
 done
 
-echo "✅ Database is ready! Running migrations and seeder..."
-alembic upgrade head
-python seed.py
+echo "✅ Database is ready! Running migrations and seeds..."
+alembic upgrade head || { echo "❌ Migration failed!"; exit 1; }
+python seed.py || { echo "❌ Seeding failed!"; exit 1; }
 
 echo "🚀 Starting API..."
 exec uvicorn main:app --host 0.0.0.0 --port 8000
