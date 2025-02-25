@@ -25,6 +25,22 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-2
 
+      - name: Validate Required Secrets
+        run: |
+          REQUIRED_SECRETS=("DB_NAME" "DB_HOST" "DB_PORT" "DB_USER" "DB_PASSWORD")
+          for SECRET in "${REQUIRED_SECRETS[@]}"; do
+            if [[ -z "${!SECRET}" ]]; then
+              echo "❌ ERROR: Secret $SECRET is not set. Deployment failed!"
+              exit 1
+            fi
+          done
+        env:
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+
       - name: Login to AWS ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
