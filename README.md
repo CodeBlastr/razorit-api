@@ -1,7 +1,4 @@
-# API Template for Quick New Application Setup
-
-
-**Building and Deploying a Scalable Hello World CI/CD Pipeline on AWS Using ECS, ECR, Fargate, Docker, Github Actions, FastAPI and PostgreSQL on RDS**
+# Building and Deploying a Scalable Hello World CI/CD Pipeline on AWS Using ECS, ECR, Fargate, Docker, Github Actions, FastAPI and PostgreSQL on RDS**
 ---
 
 **The Journey from Complexity to Simplicity**
