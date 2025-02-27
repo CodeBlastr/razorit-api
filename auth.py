@@ -10,8 +10,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # API Credentials from Environment
-CLIENT_ID = os.getenv("API_CLIENT_ID", "default-client-id")
-CLIENT_SECRET = os.getenv("API_CLIENT_SECRET", "default-client-secret")
+CLIENT_ID = os.getenv("CLIENT_ID", "default-client-id")
+CLIENT_SECRET = os.getenv("CLIENT_SECRET", "default-client-secret")
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "super-secure-key")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
