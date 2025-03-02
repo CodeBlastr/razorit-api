@@ -27,7 +27,7 @@ jobs:
 
       - name: Validate Required Secrets
         run: |
-          REQUIRED_SECRETS=("ADMIN_USERNAME" "ADMIN_PASSWORD" "JWT_SECRET_KEY" "DB_NAME" "DB_HOST" "DB_PORT" "DB_USER" "DB_PASSWORD" "MAIL_USERNAME" "MAIL_PASSWORD" "MAIL_FROM" "MAIL_PORT" "MAIL_SERVER" "MAIL_STARTTLS" "MAIL_SSL_TLS")
+          REQUIRED_SECRETS=("ADMIN_USERNAME" "ADMIN_PASSWORD" "JWT_SECRET_KEY" "DB_NAME" "DB_HOST" "DB_PORT" "DB_USER" "DB_PASSWORD" "MAIL_USERNAME" "MAIL_PASSWORD" "MAIL_FROM" "MAIL_PORT" "MAIL_SERVER" "MAIL_STARTTLS" "MAIL_SSL_TLS" "TASK_FAMILY")
           for SECRET in "${REQUIRED_SECRETS[@]}"; do
             if [[ -z "${!SECRET}" ]]; then
               echo "ERROR: Secret $SECRET is not set. Deployment failed!"
@@ -69,7 +69,7 @@ jobs:
           AWS_REGION: us-east-2
           CLUSTER_NAME: razorit-cluster
           SERVICE_NAME: razorit-api-service
-          TASK_FAMILY: razorit-api-task
+          TASK_FAMILY: ${{ secrets.TASK_FAMILY }}
           DB_NAME: ${{ secrets.DB_NAME }}
           DB_HOST: ${{ secrets.DB_HOST }}
           DB_PORT: ${{ secrets.DB_PORT }}
