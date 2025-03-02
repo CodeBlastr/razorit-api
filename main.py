@@ -50,3 +50,21 @@ async def send_test_email(email: EmailSchema, current_user: dict = Depends(get_c
     await send_email(email)
     return {"message": "Email sent!"}
 
+@app.get("/test-smtp")
+async def test_smtp():
+    import smtplib
+    import os
+
+    smtp_server = os.getenv("MAIL_SERVER")
+    smtp_port = int(os.getenv("MAIL_PORT"))
+    
+    try:
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.starttls()
+        server.login(os.getenv("MAIL_USERNAME"), os.getenv("MAIL_PASSWORD"))
+        server.quit()
+        return {"message": "SMTP Connection successful"}
+    except Exception as e:
+        return {"error": str(e)}
+
+

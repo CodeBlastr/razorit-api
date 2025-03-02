@@ -16,9 +16,9 @@ ENV = os.getenv("ENVIRONMENT", "local").lower()
 
 # Choose MailHog for local, Gmail for production
 if ENV == "production":
-    print("🚀 Running in PRODUCTION mode (Using Gmail SMTP)")
+    print("Running in PRODUCTION mode (Using Gmail SMTP)")
 else:
-    print("🛠 Running in LOCAL mode (Using MailHog)")
+    print("Running in LOCAL mode (Using MailHog)")
 
 conf = ConnectionConfig(
     MAIL_USERNAME=os.getenv("MAIL_USERNAME"),
@@ -41,3 +41,4 @@ async def send_email(email: EmailSchema):
 
     fm = FastMail(conf)
     await fm.send_message(message)
+
