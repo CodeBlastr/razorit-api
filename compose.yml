@@ -15,17 +15,22 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   api:
-    build: .
+    build:
+      context: .
+      args:
+        - ENVIRONMENT=${ENVIRONMENT:-local}  # Default to local if not set
     container_name: razorit-api
     restart: always
     volumes:
       - .:/app  # Ensures `alembic.ini` and migrations persist locally
     env_file:
-      - .env
+      - .env.local  # Default to local settings
     ports:
       - "8000:8000"
     depends_on:
       - db
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-local}  # Dynamic switching
 
   mailhog:
     image: mailhog/mailhog
@@ -33,6 +38,10 @@ services:
     ports:
       - "8025:8025"  # MailHog Web UI (view emails)
       - "1025:1025"  # SMTP server
-      
+    environment:
+      - ENVIRONMENT=local  # Only active in local mode
+    deploy:
+      replicas: ${MAILHOG_REPLICAS:-1}  # Keep 1 instance unless overridden
+
 volumes:
   postgres_data:

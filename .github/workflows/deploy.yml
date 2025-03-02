@@ -27,7 +27,7 @@ jobs:
 
       - name: Validate Required Secrets
         run: |
-          REQUIRED_SECRETS=("ADMIN_USERNAME" "ADMIN_PASSWORD" "JWT_SECRET_KEY" "DB_NAME" "DB_HOST" "DB_PORT" "DB_USER" "DB_PASSWORD")
+          REQUIRED_SECRETS=("ADMIN_USERNAME" "ADMIN_PASSWORD" "JWT_SECRET_KEY" "DB_NAME" "DB_HOST" "DB_PORT" "DB_USER" "DB_PASSWORD" "MAIL_USERNAME" "MAIL_PASSWORD" "MAIL_FROM" "MAIL_PORT" "MAIL_SERVER" "MAIL_STARTTLS" "MAIL_SSL_TLS")
           for SECRET in "${REQUIRED_SECRETS[@]}"; do
             if [[ -z "${!SECRET}" ]]; then
               echo "ERROR: Secret $SECRET is not set. Deployment failed!"
@@ -43,6 +43,13 @@ jobs:
           DB_PORT: ${{ secrets.DB_PORT }}
           DB_USER: ${{ secrets.DB_USER }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+          MAIL_FROM: ${{ secrets.MAIL_FROM }}
+          MAIL_PORT: ${{ secrets.MAIL_PORT }}
+          MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
+          MAIL_STARTTLS: ${{ secrets.MAIL_STARTTLS }}
+          MAIL_SSL_TLS: ${{ secrets.MAIL_SSL_TLS }}
 
       - name: Login to AWS ECR
         id: login-ecr
@@ -54,7 +61,7 @@ jobs:
           ECR_REPOSITORY: razorit/api
           IMAGE_TAG: latest
         run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker build --build-arg ENVIRONMENT=production -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
       - name: Register New Task Definition with ENV Variables
@@ -71,6 +78,13 @@ jobs:
           ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
           JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+          MAIL_FROM: ${{ secrets.MAIL_FROM }}
+          MAIL_PORT: ${{ secrets.MAIL_PORT }}
+          MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
+          MAIL_STARTTLS: ${{ secrets.MAIL_STARTTLS }}
+          MAIL_SSL_TLS: ${{ secrets.MAIL_SSL_TLS }}
         run: |
           TASK_DEF=$(aws ecs describe-task-definition --task-definition $TASK_FAMILY --query "taskDefinition" --output json)
 
@@ -83,7 +97,14 @@ jobs:
               {"name": "DB_PASSWORD", "value": "'$DB_PASSWORD'"},
               {"name": "ADMIN_USERNAME", "value": "'$ADMIN_USERNAME'"},
               {"name": "ADMIN_PASSWORD", "value": "'$ADMIN_PASSWORD'"},
-              {"name": "JWT_SECRET_KEY", "value": "'$JWT_SECRET_KEY'"}
+              {"name": "JWT_SECRET_KEY", "value": "'$JWT_SECRET_KEY'"},
+              {"name": "MAIL_USERNAME", "value": "'$MAIL_USERNAME'"},
+              {"name": "MAIL_PASSWORD", "value": "'$MAIL_PASSWORD'"},
+              {"name": "MAIL_FROM", "value": "'$MAIL_FROM'"},
+              {"name": "MAIL_PORT", "value": "'$MAIL_PORT'"},
+              {"name": "MAIL_SERVER", "value": "'$MAIL_SERVER'"},
+              {"name": "MAIL_STARTTLS", "value": "'$MAIL_STARTTLS'"},
+              {"name": "MAIL_SSL_TLS", "value": "'$MAIL_SSL_TLS'"}
             ] | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy, .taskDefinitionArn)' > new-task-def.json
 
           NEW_TASK_DEF_ARN=$(aws ecs register-task-definition --cli-input-json file://new-task-def.json --query "taskDefinition.taskDefinitionArn" --output text)
