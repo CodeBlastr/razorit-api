@@ -1,44 +1,42 @@
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
-from pydantic import BaseModel
 import os
-from dotenv import load_dotenv
+import logging
 
-# Load environment variables
-load_dotenv()
-
-class EmailSchema(BaseModel):
-    email: str
-    subject: str
-    message: str
-
-# Detect environment mode
-ENV = os.getenv("ENVIRONMENT", "local").lower()
-
-# Choose MailHog for local, Gmail for production
-if ENV == "production":
-    print("Running in PRODUCTION mode (Using Gmail SMTP)")
-else:
-    print("Running in LOCAL mode (Using MailHog)")
+logger = logging.getLogger(__name__)
 
 conf = ConnectionConfig(
     MAIL_USERNAME=os.getenv("MAIL_USERNAME"),
     MAIL_PASSWORD=os.getenv("MAIL_PASSWORD"),
     MAIL_FROM=os.getenv("MAIL_FROM"),
-    MAIL_PORT=int(os.getenv("MAIL_PORT", 1025 if ENV == "local" else 587)),
-    MAIL_SERVER=os.getenv("MAIL_SERVER", "mailhog" if ENV == "local" else "smtp.gmail.com"),
-    MAIL_STARTTLS=os.getenv("MAIL_STARTTLS", "False").lower() == "true",
-    MAIL_SSL_TLS=os.getenv("MAIL_SSL_TLS", "False").lower() == "true",
-    USE_CREDENTIALS=True if ENV == "production" else False
+    MAIL_PORT=int(os.getenv("MAIL_PORT", 465)),
+    MAIL_SERVER=os.getenv("MAIL_SERVER"),
+    MAIL_STARTTLS=os.getenv("MAIL_STARTTLS") == "True",
+    MAIL_SSL_TLS=os.getenv("MAIL_SSL_TLS") == "True",
+    USE_CREDENTIALS=True,
+    VALIDATE_CERTS=True
 )
 
-async def send_email(email: EmailSchema):
-    message = MessageSchema(
-        subject=email.subject,
-        recipients=[email.email],
-        body=email.message,
-        subtype="html",
-    )
+async def send_email(email):
+    try:
+        fm = FastMail(conf)
 
-    fm = FastMail(conf)
-    await fm.send_message(message)
+        message = MessageSchema(
+            subject=email.subject,
+            recipients=[email.email],
+            body=email.message,
+            subtype="plain",
+        )
 
+        # Log full email details before sending
+        logger.info(f"Preparing to send email")
+        logger.info(f"From: {os.getenv('MAIL_FROM')}")
+        logger.info(f"To: {email.email}")
+        logger.info(f"Subject: {email.subject}")
+        logger.info(f"Body: {email.message}")
+
+        await fm.send_message(message)
+        logger.info("Email sent successfully!")
+
+    except Exception as e:
+        logger.error(f"SMTP ERROR: {str(e)}")
+        raise
