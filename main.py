@@ -2,7 +2,7 @@ import os
 import smtplib
 import logging
 from dotenv import load_dotenv
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -14,6 +14,12 @@ from services.mail import send_email, EmailSchema
 
 # Load environment variables
 load_dotenv()
+
+# Ensure required environment variables are set
+required_env_vars = ["MAIL_SERVER", "MAIL_PORT", "MAIL_FROM"]
+for var in required_env_vars:
+    if not os.getenv(var):
+        raise EnvironmentError(f"Missing required environment variable: {var}")
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -51,62 +57,23 @@ async def root():
 
 @app.get("/test-db")
 async def test_db(db: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    result = await db.execute(select(TestModel))
-    items = result.scalars().all()
-    return {"data": [item.name for item in items]}
-
-@app.post("/send-test-email/")
-async def send_test_email(email: EmailSchema, current_user: dict = Depends(get_current_user)):
-    await send_email(email)
-    return {"message": "Email sent!"}
-
-# Debugging route for SMTP connectivity
-@app.get("/test-smtp-connection")
-async def test_smtp_connection():
-    smtp_server = os.getenv("MAIL_SERVER", "smtp.gmail.com")
-    smtp_port = int(os.getenv("MAIL_PORT", 465))
-    mail_username = os.getenv("MAIL_USERNAME")
-    mail_password = os.getenv("MAIL_PASSWORD")
-    use_ssl = os.getenv("MAIL_SSL_TLS", "False").lower() == "true"
-    use_starttls = os.getenv("MAIL_STARTTLS", "False").lower() == "true"
-
-    # Log environment values for debugging
-    logger.info(f"SMTP Debugging")
-    logger.info(f"Connecting to SMTP Server: {smtp_server}")
-    logger.info(f"Using Port: {smtp_port}")
-    logger.info(f"Using Username: {mail_username}")
-    logger.info(f"Using SSL/TLS: {use_ssl}")
-    logger.info(f"Using STARTTLS: {use_starttls}")
-
     try:
-        # Select SSL or TLS based on configuration
-        if use_ssl:
-            logger.info("Using SMTP_SSL for secure connection")
-            server = smtplib.SMTP_SSL(smtp_server, smtp_port)
-        else:
-            logger.info("Using STARTTLS for connection upgrade")
-            server = smtplib.SMTP(smtp_server, smtp_port)
-            if use_starttls:
-                server.starttls()
-
-        server.login(mail_username, mail_password)
-        server.quit()
-
-        logger.info("SMTP Connection successful!")
-        return {"message": "SMTP Connection successful!"}
-
-    except smtplib.SMTPAuthenticationError as e:
-        logger.error(f"Gmail Authentication Failed: {e}")
-        return {"error": "Gmail Authentication Failed", "details": str(e)}
-
-    except smtplib.SMTPConnectError as e:
-        logger.error(f"AWS IP may be blocked by Google: {e}")
-        return {"error": "AWS IP may be blocked by Google", "details": str(e)}
-
-    except smtplib.SMTPException as e:
-        logger.error(f"SMTP Error: {e}")
-        return {"error": "SMTP Error", "details": str(e)}
-
+        result = await db.execute(select(TestModel))
+        items = result.scalars().all()
+        return {"data": [item.name for item in items]}
     except Exception as e:
-        logger.error(f"Unknown SMTP Error: {e}")
-        return {"error": "Unknown SMTP Error", "details": str(e)}
+        logger.error(f"Database query failed: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch data from the database")
+
+@app.post("/send-contact/")
+async def send_test_email(email: EmailSchema, current_user: dict = Depends(get_current_user)):
+    email.subject = email.subject if email.subject else "No Subject Provided"
+    email.message = f"{email.message}"
+    
+    try:
+        await send_email(email)
+    except Exception as e:
+        logger.error(f"Failed to send email: {e}")
+        raise HTTPException(status_code=500, detail="Failed to send email")
+    
+    return {"message": "Email sent to sales!"}
