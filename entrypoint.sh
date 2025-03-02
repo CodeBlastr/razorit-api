@@ -1,11 +1,5 @@
 #!/bin/sh
 
-# Load environment variables from the ECS Task Definition
-if [ -f /app/.env ]; then
-    echo "Loading environment variables from .env file"
-    export $(cat /app/.env | xargs)
-fi
-
 echo "Environment Variables Loaded:"
 echo "DB_HOST: $DB_HOST"
 echo "DB_PORT: $DB_PORT"
@@ -27,5 +21,5 @@ done
 echo "Database is ready! Running migrations..."
 alembic upgrade head || { echo "Migration failed!"; exit 1; }
 
-echo "🚀 Starting API..."
+echo "Starting API..."
 exec uvicorn main:app --host 0.0.0.0 --port 8000

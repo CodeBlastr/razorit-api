@@ -1,3 +1,5 @@
+import os
+from dotenv import load_dotenv
 from fastapi import FastAPI, Depends
 from services.mail import send_email, EmailSchema
 from fastapi.middleware.cors import CORSMiddleware
