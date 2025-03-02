@@ -23,14 +23,11 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-region: us-east-2
 
       - name: Validate Required Secrets
         run: |
-          REQUIRED_SECRETS=(
-            "CLIENT_ID" "CLIENT_SECRET" "JWT_SECRET_KEY" "JWT_ALGORITHM" "ACCESS_TOKEN_EXPIRE_MINUTES"
-            "DB_NAME" "DB_HOST" "DB_PORT" "DB_USER" "DB_PASSWORD"
-          )
+          REQUIRED_SECRETS=("ADMIN_USERNAME" "ADMIN_PASSWORD" "JWT_SECRET_KEY" "DB_NAME" "DB_HOST" "DB_PORT" "DB_USER" "DB_PASSWORD")
           for SECRET in "${REQUIRED_SECRETS[@]}"; do
             if [[ -z "${!SECRET}" ]]; then
               echo "ERROR: Secret $SECRET is not set. Deployment failed!"
@@ -38,11 +35,9 @@ jobs:
             fi
           done
         env:
-          CLIENT_ID: ${{ secrets.CLIENT_ID }}
-          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
           JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
-          JWT_ALGORITHM: ${{ secrets.JWT_ALGORITHM }}
-          ACCESS_TOKEN_EXPIRE_MINUTES: ${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }}
           DB_NAME: ${{ secrets.DB_NAME }}
           DB_HOST: ${{ secrets.DB_HOST }}
           DB_PORT: ${{ secrets.DB_PORT }}
@@ -55,8 +50,8 @@ jobs:
 
       - name: Build and Push Docker Image
         env:
-          ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
-          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+          ECR_REGISTRY: 644732129545.dkr.ecr.us-east-2.amazonaws.com
+          ECR_REPOSITORY: razorit/api
           IMAGE_TAG: latest
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
@@ -64,20 +59,18 @@ jobs:
 
       - name: Register New Task Definition with ENV Variables
         env:
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          CLUSTER_NAME: ${{ secrets.CLUSTER_NAME }}
-          SERVICE_NAME: ${{ secrets.SERVICE_NAME }}
-          TASK_FAMILY: ${{ secrets.TASK_FAMILY }}
+          AWS_REGION: us-east-2
+          CLUSTER_NAME: razorit-cluster
+          SERVICE_NAME: razorit-api-service
+          TASK_FAMILY: razorit-api-task
           DB_NAME: ${{ secrets.DB_NAME }}
           DB_HOST: ${{ secrets.DB_HOST }}
           DB_PORT: ${{ secrets.DB_PORT }}
           DB_USER: ${{ secrets.DB_USER }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          CLIENT_ID: ${{ secrets.CLIENT_ID }}
-          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
           JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
-          JWT_ALGORITHM: ${{ secrets.JWT_ALGORITHM }}
-          ACCESS_TOKEN_EXPIRE_MINUTES: ${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }}
         run: |
           TASK_DEF=$(aws ecs describe-task-definition --task-definition $TASK_FAMILY --query "taskDefinition" --output json)
 
@@ -88,11 +81,9 @@ jobs:
               {"name": "DB_PORT", "value": "'$DB_PORT'"},
               {"name": "DB_USER", "value": "'$DB_USER'"},
               {"name": "DB_PASSWORD", "value": "'$DB_PASSWORD'"},
-              {"name": "CLIENT_ID", "value": "'$CLIENT_ID'"},
-              {"name": "CLIENT_SECRET", "value": "'$CLIENT_SECRET'"},
-              {"name": "JWT_SECRET_KEY", "value": "'$JWT_SECRET_KEY'"},
-              {"name": "JWT_ALGORITHM", "value": "'$JWT_ALGORITHM'"},
-              {"name": "ACCESS_TOKEN_EXPIRE_MINUTES", "value": "'$ACCESS_TOKEN_EXPIRE_MINUTES'"}
+              {"name": "ADMIN_USERNAME", "value": "'$ADMIN_USERNAME'"},
+              {"name": "ADMIN_PASSWORD", "value": "'$ADMIN_PASSWORD'"},
+              {"name": "JWT_SECRET_KEY", "value": "'$JWT_SECRET_KEY'"}
             ] | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy, .taskDefinitionArn)' > new-task-def.json
 
           NEW_TASK_DEF_ARN=$(aws ecs register-task-definition --cli-input-json file://new-task-def.json --query "taskDefinition.taskDefinitionArn" --output text)
