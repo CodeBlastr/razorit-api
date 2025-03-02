@@ -17,9 +17,9 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 # FastAPI Router for Authentication
-router = APIRouter()
+router = APIRouter(prefix="/auth")
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
 
 def create_access_token(data: dict, expires_delta: timedelta):
     """Generates a JWT token"""
@@ -27,7 +27,6 @@ def create_access_token(data: dict, expires_delta: timedelta):
     expire = datetime.utcnow() + expires_delta
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-
 
 @router.post("/token")
 async def generate_token(
@@ -69,7 +68,6 @@ async def generate_token(
     access_token = create_access_token(data={"sub": CLIENT_ID}, expires_delta=access_token_expires)
 
     return {"access_token": access_token, "token_type": "bearer"}
-
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     """Validate JWT Token"""

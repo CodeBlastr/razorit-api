@@ -26,23 +26,24 @@ conf = ConnectionConfig(
     MAIL_PASSWORD=os.getenv("MAIL_PASSWORD"),
     MAIL_FROM=os.getenv("MAIL_FROM"),
     MAIL_PORT=int(os.getenv("MAIL_PORT", 587)),
-    MAIL_SERVER=os.getenv("MAIL_SERVER", "email-smtp.us-east-2.amazonaws.com"),
+    MAIL_SERVER=os.getenv("MAIL_SERVER"),
     MAIL_STARTTLS=os.getenv("MAIL_STARTTLS", "True").lower() == "true",
     MAIL_SSL_TLS=os.getenv("MAIL_SSL_TLS", "False").lower() == "true",
     USE_CREDENTIALS=True,
-    VALIDATE_CERTS=True  # Ensure SSL/TLS verification
+    VALIDATE_CERTS=True
 )
 
 async def send_email(email: EmailSchema):
     message = MessageSchema(
         subject=email.subject,
-        recipients=[email.email],
+        recipients=[os.getenv("SALES_EMAIL", "sales@razorit.com")],
         body=email.message,
         subtype="html",
+        headers={"Reply-To": email.email}  # Set Reply-To to sender's email
     )
 
     try:
-        logger.info("🚀 Sending email via FastMail")
+        logger.info("Sending email via FastMail")
         fm = FastMail(conf)
         await fm.send_message(message)
         logger.info("Email sent successfully!")
