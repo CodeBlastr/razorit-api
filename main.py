@@ -50,21 +50,47 @@ async def send_test_email(email: EmailSchema, current_user: dict = Depends(get_c
     await send_email(email)
     return {"message": "Email sent!"}
 
-@app.get("/test-smtp")
-async def test_smtp():
-    import smtplib
-    import os
+import smtplib
+import os
+import logging
+from fastapi import FastAPI
 
-    smtp_server = os.getenv("MAIL_SERVER")
-    smtp_port = int(os.getenv("MAIL_PORT"))
-    
+app = FastAPI()
+logger = logging.getLogger(__name__)
+
+@app.get("/test-smtp-connection")
+async def test_smtp_connection():
+    smtp_server = os.getenv("MAIL_SERVER", "smtp.gmail.com")
+    smtp_port = int(os.getenv("MAIL_PORT", 465))
+    mail_username = os.getenv("MAIL_USERNAME")
+    mail_password = os.getenv("MAIL_PASSWORD")
+
     try:
-        server = smtplib.SMTP(smtp_server, smtp_port)
-        server.starttls()
-        server.login(os.getenv("MAIL_USERNAME"), os.getenv("MAIL_PASSWORD"))
+        logger.info(f"Connecting to SMTP: {smtp_server}:{smtp_port}")
+        
+        if smtp_port == 465:
+            server = smtplib.SMTP_SSL(smtp_server, smtp_port)
+        else:
+            server = smtplib.SMTP(smtp_server, smtp_port)
+            server.starttls()
+
+        server.login(mail_username, mail_password)
         server.quit()
-        return {"message": "SMTP Connection successful"}
+        
+        logger.info("SMTP Connection successful!")
+        return {"message": "SMTP Connection successful!"}
+
+    except smtplib.SMTPAuthenticationError as e:
+        logger.error(f"Gmail Authentication Failed: {e}")
+        return {"error": "Gmail Authentication Failed", "details": str(e)}
+
+    except smtplib.SMTPConnectError as e:
+        logger.error(f"AWS IP may be blocked by Google: {e}")
+        return {"error": "AWS IP may be blocked by Google", "details": str(e)}
+
     except Exception as e:
-        return {"error": str(e)}
+        logger.error(f"Unknown SMTP Error: {e}")
+        return {"error": "Unknown SMTP Error", "details": str(e)}
+
 
 

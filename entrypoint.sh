@@ -5,6 +5,12 @@ echo "DB_HOST: $DB_HOST"
 echo "DB_PORT: $DB_PORT"
 echo "DB_NAME: $DB_NAME"
 echo "DB_USER: $DB_USER"
+echo "MAIL_SERVER: $MAIL_SERVER"
+echo "MAIL_PORT: $MAIL_PORT"
+echo "MAIL_USERNAME: $MAIL_USERNAME"
+echo "MAIL_FROM: $MAIL_FROM"
+echo "MAIL_STARTTLS: $MAIL_STARTTLS"
+echo "MAIL_SSL_TLS: $MAIL_SSL_TLS"
 
 # Ensure critical environment variables are set
 if [ -z "$DB_HOST" ] || [ -z "$DB_PORT" ] || [ -z "$DB_NAME" ] || [ -z "$DB_USER" ]; then
