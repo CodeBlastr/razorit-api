@@ -1,7 +1,8 @@
 import os
+import smtplib
+import logging
 from dotenv import load_dotenv
 from fastapi import FastAPI, Depends
-from services.mail import send_email, EmailSchema
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -9,19 +10,28 @@ from sqlalchemy.future import select
 from auth import router as auth_router, get_current_user
 from database import get_db
 from models import TestModel
+from services.mail import send_email, EmailSchema
 
+# Load environment variables
+load_dotenv()
+
+# Initialize FastAPI app
 app = FastAPI()
+
+# Logger setup
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 # Allow frontend domains to access the backend API
 origins = [
-    "https://www.razorit.com",  # Production frontend
-    "http://www.razorit.com",  # Production frontend
-    "https://api.razorit.com",  # Secure API access
-    "http://api.razorit.com",  # Secure API access
-    "http://localhost:8080",  # Local dev environment
-    "https://localhost:8080",  # Local dev environment
-    "http://localhost:5173",  # Local react dev environment
-    "https://localhost:5173",  # Local react dev environment
+    "https://www.razorit.com",
+    "http://www.razorit.com",
+    "https://api.razorit.com",
+    "http://api.razorit.com",
+    "http://localhost:8080",
+    "https://localhost:8080",
+    "http://localhost:5173",
+    "https://localhost:5173",
 ]
 
 app.add_middleware(
@@ -50,33 +60,38 @@ async def send_test_email(email: EmailSchema, current_user: dict = Depends(get_c
     await send_email(email)
     return {"message": "Email sent!"}
 
-import smtplib
-import os
-import logging
-from fastapi import FastAPI
-
-app = FastAPI()
-logger = logging.getLogger(__name__)
-
+# Debugging route for SMTP connectivity
 @app.get("/test-smtp-connection")
 async def test_smtp_connection():
     smtp_server = os.getenv("MAIL_SERVER", "smtp.gmail.com")
     smtp_port = int(os.getenv("MAIL_PORT", 465))
     mail_username = os.getenv("MAIL_USERNAME")
     mail_password = os.getenv("MAIL_PASSWORD")
+    use_ssl = os.getenv("MAIL_SSL_TLS", "False").lower() == "true"
+    use_starttls = os.getenv("MAIL_STARTTLS", "False").lower() == "true"
+
+    # Log environment values for debugging
+    logger.info(f"SMTP Debugging")
+    logger.info(f"Connecting to SMTP Server: {smtp_server}")
+    logger.info(f"Using Port: {smtp_port}")
+    logger.info(f"Using Username: {mail_username}")
+    logger.info(f"Using SSL/TLS: {use_ssl}")
+    logger.info(f"Using STARTTLS: {use_starttls}")
 
     try:
-        logger.info(f"Connecting to SMTP: {smtp_server}:{smtp_port}")
-        
-        if smtp_port == 465:
+        # Select SSL or TLS based on configuration
+        if use_ssl:
+            logger.info("Using SMTP_SSL for secure connection")
             server = smtplib.SMTP_SSL(smtp_server, smtp_port)
         else:
+            logger.info("Using STARTTLS for connection upgrade")
             server = smtplib.SMTP(smtp_server, smtp_port)
-            server.starttls()
+            if use_starttls:
+                server.starttls()
 
         server.login(mail_username, mail_password)
         server.quit()
-        
+
         logger.info("SMTP Connection successful!")
         return {"message": "SMTP Connection successful!"}
 
@@ -88,9 +103,10 @@ async def test_smtp_connection():
         logger.error(f"AWS IP may be blocked by Google: {e}")
         return {"error": "AWS IP may be blocked by Google", "details": str(e)}
 
+    except smtplib.SMTPException as e:
+        logger.error(f"SMTP Error: {e}")
+        return {"error": "SMTP Error", "details": str(e)}
+
     except Exception as e:
         logger.error(f"Unknown SMTP Error: {e}")
         return {"error": "Unknown SMTP Error", "details": str(e)}
-
-
-
