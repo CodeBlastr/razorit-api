@@ -35,26 +35,24 @@ conf = ConnectionConfig(
 )
 
 async def send_email(email: EmailSchema):
-    reply_to = [(email.name, email.email)]  # Correctly format Reply-To
-
-    # **Enhanced message formatting**
-    email_body = f"""
+    reply_to = [(email.name, email.email)]
+    email_body = """\
     <html>
         <body>
-            <p><strong>Sender Name:</strong> {email.name}</p>
-            <p><strong>Sender Email:</strong> {email.email}</p>
+            <p><strong>Sender Name:</strong> {name}</p>
+            <p><strong>Sender Email:</strong> {email}</p>
             <p><strong>Message:</strong></p>
-            <p>{email.message.replace('\n', '<br>')}</p>
+            <p>{message}</p>
         </body>
     </html>
-    """
+    """.format(name=email.name, email=email.email, message=email.message.replace("\n", "<br>"))
 
     message = MessageSchema(
         subject=email.subject,
         recipients=[os.getenv("SALES_EMAIL", "sales@razorit.com")],
         body=email_body,
         subtype="html",
-        reply_to=reply_to  # Ensuring Reply-To is properly set
+        reply_to=reply_to
     )
 
     try:
