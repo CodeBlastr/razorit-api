@@ -9,6 +9,7 @@ logging.basicConfig(level=logging.INFO)
 
 class EmailSchema(BaseModel):
     email: str
+    name: str  # Added name field
     subject: str
     message: str
 
@@ -34,16 +35,17 @@ conf = ConnectionConfig(
 )
 
 async def send_email(email: EmailSchema):
+    reply_to = f"{email.name} <{email.email}>"  # Correctly format Reply-To
     message = MessageSchema(
         subject=email.subject,
-        recipients=[os.getenv("SALES_EMAIL", "sales@razorit.com")],
+        recipients=[os.getenv("SALES_EMAIL", "sales@example.com")],
         body=email.message,
         subtype="html",
-        headers={"Reply-To": email.email}  # Set Reply-To to sender's email
+        headers={"Reply-To": reply_to}  # Set Reply-To to "Name <email>"
     )
 
     try:
-        logger.info("Sending email via FastMail")
+        logger.info(f"Sending email via FastMail to {message.recipients}")
         fm = FastMail(conf)
         await fm.send_message(message)
         logger.info("Email sent successfully!")
