@@ -35,9 +35,7 @@ conf = ConnectionConfig(
 )
 
 async def send_email(email: EmailSchema):
-    reply_to = [(email.name, email.email)]  # Correctly format Reply-To
-
-    # **Fix: Avoid f-string issue with backslashes**
+    reply_to = [(email.name, email.email)]
     email_body = """\
     <html>
         <body>
@@ -54,7 +52,7 @@ async def send_email(email: EmailSchema):
         recipients=[os.getenv("SALES_EMAIL", "sales@razorit.com")],
         body=email_body,
         subtype="html",
-        reply_to=reply_to  # Ensuring Reply-To is properly set
+        reply_to=reply_to
     )
 
     try:
