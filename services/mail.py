@@ -35,17 +35,18 @@ conf = ConnectionConfig(
 )
 
 async def send_email(email: EmailSchema):
-    reply_to = f"{email.name} <{email.email}>"  # Correctly format Reply-To
+    reply_to = [(email.name, email.email)]  # Correctly format Reply-To
+
     message = MessageSchema(
         subject=email.subject,
         recipients=[os.getenv("SALES_EMAIL", "sales@example.com")],
         body=email.message,
         subtype="html",
-        headers={"Reply-To": reply_to}  # Set Reply-To to "Name <email>"
+        reply_to=reply_to 
     )
 
     try:
-        logger.info(f"Sending email via FastMail to {message.recipients}")
+        logger.info(f"Sending email via FastMail to {message.recipients} with Reply-To: {reply_to}")
         fm = FastMail(conf)
         await fm.send_message(message)
         logger.info("Email sent successfully!")
