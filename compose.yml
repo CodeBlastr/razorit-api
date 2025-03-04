@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16
+    container_name: razorit-db-local
+    restart: always
+    environment:
+      POSTGRES_USER: dbadmin
+      POSTGRES_PASSWORD: YourSecurePassword123
+      POSTGRES_DB: razorit
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: .
+      args:
+        - ENVIRONMENT=${ENVIRONMENT:-local}  # Default to local if not set
+    container_name: razorit-api
+    restart: always
+    volumes:
+      - .:/app  # Ensures `alembic.ini` and migrations persist locally
+    env_file:
+      - .env.local  # Default to local settings
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-local}  # Dynamic switching
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: mailhog
+    ports:
+      - "8025:8025"  # MailHog Web UI (view emails)
+      - "1025:1025"  # SMTP server
+    environment:
+      - ENVIRONMENT=local  # Only active in local mode
+    deploy:
+      replicas: ${MAILHOG_REPLICAS:-1}  # Keep 1 instance unless overridden
+
+volumes:
+  postgres_data:
