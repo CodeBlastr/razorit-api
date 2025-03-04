@@ -12,7 +12,7 @@ class EmailSchema(BaseModel):
     name: str  # Sender's name
     subject: str
     message: str
-    reply_to: str | None = None  # ✅ Ensure reply_to is a string
+    reply_to: str | None = None 
 
 # Log environment values
 logger.info(f"Using SMTP Server: {os.getenv('MAIL_SERVER')}")
@@ -36,7 +36,8 @@ conf = ConnectionConfig(
 )
 
 async def send_email(email: EmailSchema):
-    reply_to = email.reply_to if email.reply_to else f"{email.name} <{email.email}>"
+    # ✅ Ensure reply_to is formatted correctly
+    formatted_reply_to = email.reply_to if email.reply_to else f"{email.name} <{email.email}>"
 
     email_body = """\
     <html>
@@ -54,11 +55,11 @@ async def send_email(email: EmailSchema):
         recipients=[os.getenv("SALES_EMAIL", "sales@razorit.com")],
         body=email_body,
         subtype="html",
-        reply_to=[reply_to]
+        reply_to=[formatted_reply_to]
     )
 
     try:
-        logger.info(f"Sending email via FastMail to {message.recipients} with Reply-To: {reply_to}")
+        logger.info(f"Sending email via FastMail to {message.recipients} with Reply-To: {formatted_reply_to}")
         fm = FastMail(conf)
         await fm.send_message(message)
         logger.info("Email sent successfully!")
