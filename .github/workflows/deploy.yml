@@ -69,7 +69,6 @@ jobs:
           AWS_REGION: us-east-2
           CLUSTER_NAME: razorit-cluster
           SERVICE_NAME: razorit-api-service
-          TASK_FAMILY: razorit-api-task
           DB_NAME: ${{ secrets.DB_NAME }}
           DB_HOST: ${{ secrets.DB_HOST }}
           DB_PORT: ${{ secrets.DB_PORT }}
@@ -86,9 +85,7 @@ jobs:
           MAIL_STARTTLS: ${{ secrets.MAIL_STARTTLS }}
           MAIL_SSL_TLS: ${{ secrets.MAIL_SSL_TLS }}
         run: |
-          export TASK_FAMILY="razorit-api-task"
-
-          TASK_DEF=$(aws ecs describe-task-definition --task-definition $TASK_FAMILY --query "taskDefinition" --output json | jq '.containerDefinitions[0].image = "'$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG'"')
+          TASK_DEF=$(aws ecs describe-task-definition --task-definition razorit-api-task --query "taskDefinition" --output json | jq '.containerDefinitions[0].image = "'$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG'"')
 
           echo "$TASK_DEF" | jq '
             .containerDefinitions[0].environment += [
