@@ -56,13 +56,9 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build and Push Docker Image
-        env:
-          ECR_REGISTRY: 644732129545.dkr.ecr.us-east-2.amazonaws.com
-          ECR_REPOSITORY: razorit/api
-          IMAGE_TAG: latest
         run: |
-          docker build --build-arg ENVIRONMENT=production -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker build --build-arg ENVIRONMENT=production -t 644732129545.dkr.ecr.us-east-2.amazonaws.com/razorit/api:latest .
+          docker push 644732129545.dkr.ecr.us-east-2.amazonaws.com/razorit/api:latest
 
       - name: Register New Task Definition with ENV Variables
         env:
@@ -85,7 +81,11 @@ jobs:
           MAIL_STARTTLS: ${{ secrets.MAIL_STARTTLS }}
           MAIL_SSL_TLS: ${{ secrets.MAIL_SSL_TLS }}
         run: |
-          TASK_DEF=$(aws ecs describe-task-definition --task-definition razorit-api-task --query "taskDefinition" --output json | jq '.containerDefinitions[0].image = "'$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG'"')
+          # Debugging - Print confirmation before updating task definition
+          echo "Registering new ECS task definition with hardcoded image"
+
+          TASK_DEF=$(aws ecs describe-task-definition --task-definition razorit-api-task --query "taskDefinition" --output json | \
+          jq '.containerDefinitions[0].image = "644732129545.dkr.ecr.us-east-2.amazonaws.com/razorit/api:latest"')
 
           echo "$TASK_DEF" | jq '
             .containerDefinitions[0].environment += [
@@ -108,4 +108,4 @@ jobs:
 
           NEW_TASK_DEF_ARN=$(aws ecs register-task-definition --cli-input-json file://new-task-def.json --query "taskDefinition.taskDefinitionArn" --output text)
 
-          aws ecs update-service --cluster $CLUSTER_NAME --service $SERVICE_NAME --task-definition $NEW_TASK_DEF_ARN --force-new-deployment
+          aws ecs update-service --cluster razorit-cluster --service razorit-api-service --task-definition $NEW_TASK_DEF_ARN --force-new-deployment
