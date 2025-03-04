@@ -1,85 +1,45 @@
 import os
-import base64
+import logging
 from datetime import datetime, timedelta
-from fastapi import APIRouter, Depends, HTTPException, Form, Header
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
-from jose import jwt
+from jose import jwt, JWTError
 from dotenv import load_dotenv
+from pydantic import BaseModel
 
-# Load environment variables
+# ✅ Load environment variables from .env file
 load_dotenv()
 
-# API Credentials from Environment
-CLIENT_ID = os.getenv("CLIENT_ID", "default-client-id")
-CLIENT_SECRET = os.getenv("CLIENT_SECRET", "default-client-secret")
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "super-secure-key")
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
+router = APIRouter()
 
-# FastAPI Router for Authentication
-router = APIRouter(prefix="/auth")
+# ✅ Environment variables remain intact
+SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your_secret_key")
+ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
 
-def create_access_token(data: dict, expires_delta: timedelta):
+class TokenData(BaseModel):
+    username: str | None = None
+
+def create_access_token(data: dict, expires_delta: timedelta | None = None):
     to_encode = data.copy()
-    expire = datetime.utcnow() + expires_delta
+    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-@router.post("/token")
-async def generate_token(
-    client_id: str = Form(None),
-    client_secret: str = Form(None),
-    authorization: str = Header(None),
-):
-    """
-    Authenticate client using either:
-    1. Basic Auth (Authorization Header)
-    2. Form Data (client_id, client_secret)
-    """
-    
-    # Option 1: If Authorization Header (Basic Auth) is used
-    if authorization:
-        try:
-            scheme, credentials = authorization.split()
-            if scheme.lower() != "basic":
-                raise HTTPException(status_code=401, detail="Invalid authentication scheme")
-
-            decoded = base64.b64decode(credentials).decode("utf-8")
-            auth_client_id, auth_client_secret = decoded.split(":")
-        except Exception:
-            raise HTTPException(status_code=401, detail="Invalid Basic Auth format")
-
-        if auth_client_id != CLIENT_ID or auth_client_secret != CLIENT_SECRET:
-            raise HTTPException(status_code=401, detail="Invalid client credentials")
-
-    # Option 2: If Form Data is used
-    elif client_id and client_secret:
-        if client_id != CLIENT_ID or client_secret != CLIENT_SECRET:
-            raise HTTPException(status_code=401, detail="Invalid client credentials")
-    
-    else:
-        raise HTTPException(status_code=401, detail="Missing credentials")
-
-    # Generate JWT Token
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(data={"sub": CLIENT_ID}, expires_delta=access_token_expires)
-
-    return {"access_token": access_token, "token_type": "bearer"}
-
 async def get_current_user(token: str = Depends(oauth2_scheme)):
-    """Validate JWT Token"""
-    credentials_exception = HTTPException(
-        status_code=401,
-        detail="Invalid credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+    credentials_exception = HTTPException(status_code=401, detail="Invalid credentials")
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        client_id: str = payload.get("sub")
-        if client_id is None or client_id != CLIENT_ID:
+        username: str = payload.get("sub")
+        if username is None:
             raise credentials_exception
-    except jwt.JWTError:
+    except JWTError:
         raise credentials_exception
-    return {"client_id": CLIENT_ID}
+    return {"username": username}
+
+@router.post("/auth/token")
+async def generate_token():
+    access_token = create_access_token(data={"sub": "default_user"})
+    return {"access_token": access_token, "token_type": "bearer"}

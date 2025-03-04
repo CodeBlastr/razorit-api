@@ -1,17 +1,18 @@
 import os
 import logging
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 # Configure logger
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 class EmailSchema(BaseModel):
-    email: str
-    name: str  # Added name field
+    email: EmailStr  # Sender's email
+    name: str  # Sender's name
     subject: str
     message: str
+    reply_to: str | None = None  # ✅ Ensure reply_to is a string
 
 # Log environment values
 logger.info(f"Using SMTP Server: {os.getenv('MAIL_SERVER')}")
@@ -35,7 +36,8 @@ conf = ConnectionConfig(
 )
 
 async def send_email(email: EmailSchema):
-    reply_to = [(email.name, email.email)]
+    reply_to = email.reply_to if email.reply_to else f"{email.name} <{email.email}>"
+
     email_body = """\
     <html>
         <body>
@@ -52,7 +54,7 @@ async def send_email(email: EmailSchema):
         recipients=[os.getenv("SALES_EMAIL", "sales@razorit.com")],
         body=email_body,
         subtype="html",
-        reply_to=reply_to
+        reply_to=[reply_to]
     )
 
     try:

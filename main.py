@@ -68,7 +68,10 @@ async def test_db(db: AsyncSession = Depends(get_db), current_user: dict = Depen
 @app.post("/send-contact/")
 async def send_contact_email(email: EmailSchema, current_user: dict = Depends(get_current_user)):
     email.subject = email.subject if email.subject else "Contact Form Submission"
-    email.reply_to = f"{email.name} <{email.email}>"
+    
+    # ✅ Ensure reply_to is properly formatted
+    if not email.reply_to:
+        email.reply_to = f"{email.name} <{email.email}>"
 
     try:
         await send_email(email)
